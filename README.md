@@ -6,9 +6,9 @@
 
 ## English
 
-Hardware abstraction layer (HAL) for the gd32e230x and gd32e231x microcontrollers (Cortex-M23), written on top of the PAC crate: [github](https://github.com/gd32-rust/gd32-rs), [crates.io](https://crates.io/crates/gd32e2).
+Hardware abstraction layer (HAL) for the GD32E230 microcontrollers (Cortex-M23), written on top of the PAC crate: [github](https://github.com/gd32-rust/gd32-rs), [crates.io](https://crates.io/crates/gd32e2).
 
-> **Work in progress.** Written piece by piece, the API is unstable. Implemented modules: `adc`, `cmp`, `crc`, `dma`, `exti`, `fmc`, `gpio`, `i2c`, `rcu`, `spi`, `syscfg`, `time`, `timer`, `usart`, `watchdog`. Usage examples live in `examples/`, all of them run on the board. Not verified: option byte fields other than the data bytes.
+> **Work in progress.** Written piece by piece, the API is unstable. Implemented modules: `adc`, `cmp`, `crc`, `dma`, `exti`, `fmc`, `gpio`, `i2c`, `rcu`, `spi`, `syscfg`, `time`, `timer`, `usart`, `watchdog`. Usage examples live in `examples/`, all of them run on the board. Not verified: the I²C fast and fast plus modes — written, unreachable on the test bench without external pull-ups; `CMPHST`, `CMPOSEL` and `lock` of the comparator; USART `Event::Error`; internal EXTI lines (LVD, RTC, CMP, USART0 wakeup); option byte fields other than the data bytes.
 
 ### Principles
 
@@ -52,7 +52,6 @@ let mut fmc = dp.fmc.constrain();
 let config = ClockConfig::default()
     .sysclk(SysClk::Pll(PllFreq::Mhz48));    // PLL from IRC8M -> 48 MHz
 let mut rcu = dp.rcu.constrain().freeze(&mut fmc, config);
-let clocks = rcu.clocks();
 let parts = dp.gpioa.split(&mut rcu);        // enables the GPIOA clock
 
 let mut led = parts.pa5.into_output();
@@ -122,9 +121,9 @@ Any contribution submitted for inclusion in this work shall be licensed the same
 
 ## Русский
 
-Hardware abstraction layer (HAL) для микроконтроллеров семейства gd32e230x и gd32e231x (Cortex-M23), написанный поверх PAC-крейта: [github](https://github.com/gd32-rust/gd32-rs), [crates.io](https://crates.io/crates/gd32e2).
+Hardware abstraction layer (HAL) для микроконтроллеров GD32E230 (Cortex-M23), написанный поверх PAC-крейта: [github](https://github.com/gd32-rust/gd32-rs), [crates.io](https://crates.io/crates/gd32e2).
 
-> **В работе.** Пишется частями, API нестабилен. Реализованные модули: `adc`, `cmp`, `crc`, `dma`, `exti`, `fmc`, `gpio`, `i2c`, `rcu`, `spi`, `syscfg`, `time`, `timer`, `usart`, `watchdog`. Имеются примеры использования в `examples/`, все прогнаны на плате. Из непроверенного: поля option bytes кроме байтов данных.
+> **В работе.** Пишется частями, API нестабилен. Реализованные модули: `adc`, `cmp`, `crc`, `dma`, `exti`, `fmc`, `gpio`, `i2c`, `rcu`, `spi`, `syscfg`, `time`, `timer`, `usart`, `watchdog`. Имеются примеры использования в `examples/`, все прогнаны на плате. Из непроверенного: режимы I²C fast и fast plus — написаны, на стенде без внешних подтяжек недостижимы; `CMPHST`, `CMPOSEL` и `lock` у компаратора; `Event::Error` у USART; внутренние линии EXTI (LVD, RTC, CMP, USART0 wakeup); поля option bytes кроме байтов данных.
 
 ### Принципы
 
@@ -168,7 +167,6 @@ let mut fmc = dp.fmc.constrain();
 let config = ClockConfig::default()
     .sysclk(SysClk::Pll(PllFreq::Mhz48));    // PLL от IRC8M -> 48 МГц
 let mut rcu = dp.rcu.constrain().freeze(&mut fmc, config);
-let clocks = rcu.clocks();
 let parts = dp.gpioa.split(&mut rcu);        // включает такт GPIOA
 
 let mut led = parts.pa5.into_output();
