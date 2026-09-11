@@ -94,18 +94,18 @@ fn USART0() {
     critical_section::with(|cs| {
         let mut shared = SHARED.borrow(cs).borrow_mut();
         let (usart, read_buf, to_read, write_buf, to_write) = shared.as_mut().unwrap();
-        if usart.is_listening(Event::Rbne) && Usart::read_ready(usart) {
-            if let Ok(byte) = usart.read_byte() {
-                if *to_read < BUF_LENGTH {
-                    read_buf[*to_read] = byte;
-                    *to_read += 1;
-                    if *to_read == BUF_LENGTH {
-                        if read_buf == write_buf {
-                            defmt::info!("echo ok");
-                        } else {
-                            defmt::error!("echo not ok: {} != {}", read_buf, write_buf);
-                        }
-                    }
+        if usart.is_listening(Event::Rbne)
+            && Usart::read_ready(usart)
+            && let Ok(byte) = usart.read_byte()
+            && *to_read < BUF_LENGTH
+        {
+            read_buf[*to_read] = byte;
+            *to_read += 1;
+            if *to_read == BUF_LENGTH {
+                if read_buf == write_buf {
+                    defmt::info!("echo ok");
+                } else {
+                    defmt::error!("echo not ok: {} != {}", read_buf, write_buf);
                 }
             }
         }

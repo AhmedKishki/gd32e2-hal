@@ -52,5 +52,6 @@ fn main() -> ! {
         clocks.sysclk().to_Hz() / 4
     );
 
+    #[allow(clippy::empty_loop)]
     loop {}
 }

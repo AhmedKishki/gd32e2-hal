@@ -97,6 +97,7 @@ fn main() -> ! {
     wwdgt.feed();
 
     defmt::error!("still alive: the early feed did not reset the board");
+    #[allow(clippy::empty_loop)]
     loop {}
 }
 

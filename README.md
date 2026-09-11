@@ -1,5 +1,7 @@
 # gd32e2-hal
 
+[![CI](https://github.com/Szizoid/gd32e2-hal/actions/workflows/ci.yml/badge.svg)](https://github.com/Szizoid/gd32e2-hal/actions/workflows/ci.yml)
+
 [English](#english) · [Русский](#русский)
 
 ---
@@ -81,6 +83,7 @@ cargo pubdry          # publish --dry-run with the same feature
 cargo be usart-echo   # check that one example builds, no probe needed
 cargo bre usart-echo  # the same in release
 cargo examples        # every example in release, skipping the ones for another part
+cargo examplesclippy  # clippy over the same examples
 cargo re usart-echo   # build + flash over SWD, stays attached afterwards
 ```
 
@@ -106,7 +109,7 @@ cargo re usart-echo   # build + flash over SWD, stays attached afterwards
 **Infrastructure**
 - [ ] gd32e231x support: part number features, pin map, gates. The PAC module exists, the chip is not at hand.
 - [ ] Async: `embedded-hal-async` / `embedded-io-async`, starting with a time driver on one of the timers — that is what Embassy expects from a HAL.
-- [ ] Host tests and CI — there are none at all; the crate does not build for the host, so mocks are needed.
+- [ ] Host tests — there are none at all; the crate does not build for the host, so mocks are needed.
 - [ ] Moving the HAL into its own crate/repository.
 
 ### License
@@ -196,6 +199,7 @@ cargo pubdry          # publish --dry-run с той же фичей
 cargo be usart-echo   # проверить сборку одного примера, зонд не нужен
 cargo bre usart-echo  # то же в release
 cargo examples        # все примеры в release, кроме примеров под другой партномер
+cargo examplesclippy  # clippy по тем же примерам
 cargo re usart-echo   # сборка + прошивка по SWD, дальше остаётся подключённым
 ```
 
@@ -221,7 +225,7 @@ cargo re usart-echo   # сборка + прошивка по SWD, дальше �
 **Инфраструктура**
 - [ ] Поддержка gd32e231x: фичи партномеров, карта пинов, гейты. PAC-модуль есть, чипа на руках нет.
 - [ ] Async: `embedded-hal-async` / `embedded-io-async`, начиная с драйвера времени поверх одного из таймеров — именно его Embassy ждёт от HAL.
-- [ ] Тесты на хосте и CI — их нет вовсе; крейт не собирается под хост, поэтому нужны моки.
+- [ ] Тесты на хосте — их нет вовсе; крейт не собирается под хост, поэтому нужны моки.
 - [ ] Вынос HAL в отдельный крейт/репозиторий.
 
 ### Лицензия

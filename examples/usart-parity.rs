@@ -63,5 +63,6 @@ fn main() -> ! {
     // Done exercising it — hand the peripheral and pins back.
     let (_usart1, _tx, _rx) = usart1.release();
     defmt::info!("released, done");
+    #[allow(clippy::empty_loop)]
     loop {}
 }

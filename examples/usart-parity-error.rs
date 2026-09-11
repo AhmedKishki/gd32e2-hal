@@ -203,11 +203,10 @@ fn USART1() {
         }
         if Usart::read_ready(usart)
             && let Ok(byte) = usart.read_byte()
+            && *got < LENGTH
         {
-            if *got < LENGTH {
-                received[*got] = byte;
-                *got += 1;
-            }
+            received[*got] = byte;
+            *got += 1;
         }
     })
 }

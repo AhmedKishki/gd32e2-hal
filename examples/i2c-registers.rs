@@ -68,6 +68,7 @@ fn main() -> ! {
     let out = [REG, VALUES[0], VALUES[1]];
     if let Err(e) = i2c.write(ADDRESS, &out) {
         defmt::error!("write: {}", e);
+        #[allow(clippy::empty_loop)]
         loop {}
     }
 
@@ -85,5 +86,6 @@ fn main() -> ! {
     }
 
     defmt::info!("done");
+    #[allow(clippy::empty_loop)]
     loop {}
 }

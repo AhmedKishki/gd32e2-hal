@@ -105,5 +105,6 @@ fn main() -> ! {
     }
 
     defmt::info!("done");
+    #[allow(clippy::empty_loop)]
     loop {}
 }
