@@ -75,6 +75,7 @@ fn main() -> ! {
     // Hand the peripheral and pins back.
     let (_spi1, _sck, _miso, _mosi) = spi.release();
     defmt::info!("released, done");
-    #[allow(clippy::empty_loop)]
-    loop {}
+    loop {
+        cortex_m::asm::wfi();
+    }
 }

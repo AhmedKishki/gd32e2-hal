@@ -89,8 +89,9 @@ fn main() -> ! {
 
     let Some(addr) = found else {
         defmt::warn!("nobody answered — check the pull-ups and the wiring");
-        #[allow(clippy::empty_loop)]
-        loop {}
+        loop {
+            cortex_m::asm::wfi();
+        }
     };
     defmt::info!("talking to {=u8:#04x}", addr);
 
@@ -133,6 +134,7 @@ fn main() -> ! {
     }
 
     defmt::info!("done");
-    #[allow(clippy::empty_loop)]
-    loop {}
+    loop {
+        cortex_m::asm::wfi();
+    }
 }

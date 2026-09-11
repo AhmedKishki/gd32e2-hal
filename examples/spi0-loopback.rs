@@ -70,6 +70,7 @@ fn main() -> ! {
     }
 
     defmt::info!("done");
-    #[allow(clippy::empty_loop)]
-    loop {}
+    loop {
+        cortex_m::asm::wfi();
+    }
 }

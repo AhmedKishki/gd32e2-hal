@@ -71,6 +71,7 @@ fn main() -> ! {
         "no more feeding — expect a reset within {} s",
         TIMEOUT.as_secs()
     );
-    #[allow(clippy::empty_loop)]
-    loop {}
+    loop {
+        cortex_m::asm::wfi();
+    }
 }

@@ -97,8 +97,9 @@ fn main() -> ! {
     wwdgt.feed();
 
     defmt::error!("still alive: the early feed did not reset the board");
-    #[allow(clippy::empty_loop)]
-    loop {}
+    loop {
+        cortex_m::asm::wfi();
+    }
 }
 
 /// Feeds the watchdog `MEALS` times, each one inside the window, which both

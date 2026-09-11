@@ -1,9 +1,9 @@
 //! Clock tree: bus prescalers, the USART0 clock source, and CK_OUT.
 //!
 //! `Clocks` only reports what the HAL *believes* it configured; routing a clock
-//! node onto a pin is what proves the hardware agrees. This drives `sysclk / 4`
-//! onto PA8 (AF0) for a scope or a frequency counter, sets the bus prescalers,
-//! and logs the computed values so the two can be compared.
+//! node onto a pin is what proves the hardware agrees. This drives
+//! `sysclk / 128` onto PA8 (AF0) for a scope or a frequency counter, sets the
+//! bus prescalers, and logs the computed values so the two can be compared.
 //!
 //! Covers: `ClockConfig` `hclk`/`pclk1`/`pclk2`/`usart0_sel`, `AhbPsc`/`ApbPsc`,
 //! `Usart0Sel`, the `Clocks` getters, and `Rcu::ck_out`.
@@ -36,9 +36,9 @@ fn main() -> ! {
 
     let gpioa = dp.gpioa.split(&mut rcu);
 
-    // CK_OUT goes on PA8 (AF0); measure sysclk/4 = 12 MHz there.
+    // CK_OUT goes on PA8 (AF0); measure sysclk/128 = 375 kHz there.
     let _ck_out = gpioa.pa8.into_alternate::<0>();
-    rcu.ck_out(CkOutSrc::Sysclk, CkOutDiv::Div4);
+    rcu.ck_out(CkOutSrc::Sysclk, CkOutDiv::Div128);
     // The PLL can be tapped too, with its own divide-by-1/2 before CK_OUT, e.g.:
     let _alt_src = CkOutSrc::Pll(PllDiv::Div2);
 
@@ -48,10 +48,11 @@ fn main() -> ! {
     defmt::info!("pclk2  = {} Hz", clocks.pclk2().to_Hz());
     defmt::info!("usart0 = {} Hz", clocks.usart0().to_Hz());
     defmt::info!(
-        "CK_OUT on PA8 = sysclk/4 = {} Hz",
-        clocks.sysclk().to_Hz() / 4
+        "CK_OUT on PA8 = sysclk/128 = {} Hz",
+        clocks.sysclk().to_Hz() / 128
     );
 
-    #[allow(clippy::empty_loop)]
-    loop {}
+    loop {
+        cortex_m::asm::wfi();
+    }
 }
