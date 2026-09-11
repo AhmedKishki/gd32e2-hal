@@ -192,7 +192,9 @@ fn main() {
              {{\n\
              \x20   FLASH : ORIGIN = {}, LENGTH = {}K\n\
              \x20   RAM   : ORIGIN = {}, LENGTH = {}K\n\
-             }}\n",
+             }}\n\
+             /* .text inherits the 8-byte alignment of cortex_m::asm::delay. */\n\
+             _stext = ALIGN(ADDR(.vector_table) + SIZEOF(.vector_table), 8);\n",
             chip.feature, FLASH_ORIGIN, chip.flash_kb, RAM_ORIGIN, chip.sram_kb
         ),
     )
