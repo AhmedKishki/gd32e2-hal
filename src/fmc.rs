@@ -177,7 +177,7 @@ impl ProtectionLevel {
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[repr(u8)]
-pub enum Spc {
+enum Spc {
     /// No protection.
     None = 0xA5,
     /// Low protection. Every code other than the two named here means this one
