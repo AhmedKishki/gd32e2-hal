@@ -24,22 +24,22 @@ A feature name is the part number with `x` in the fields the code does not see: 
 
 | feature | pads | flash | SRAM |
 | --- | --- | --- | --- |
-| `gd32e230f4xx` / `f6xx` / `f8xx` | 20 | 16K / 32K / 64K | 4K / 6K / 8K |
-| `gd32e230e8xx` | 24 | 64K | 8K |
-| `gd32e230g4xx` / `g6xx` / `g8xx` | 28 | 16K / 32K / 64K | 4K / 6K / 8K |
-| `gd32e230k4tx` / `k6tx` / `k8tx` | 32, LQFP | 16K / 32K / 64K | 4K / 6K / 8K |
-| `gd32e230k4ux` / `k6ux` / `k8ux` | 32, QFN | 16K / 32K / 64K | 4K / 6K / 8K |
-| `gd32e230c4xx` / `c6xx` / `c8xx` | 48 | 16K / 32K / 64K | 4K / 6K / 8K |
+| [`gd32e230f4xx`](https://szizoid.github.io/gd32e2-hal/gd32e230f4xx/gd32e2_hal/index.html) / [`f6xx`](https://szizoid.github.io/gd32e2-hal/gd32e230f6xx/gd32e2_hal/index.html) / [`f8xx`](https://szizoid.github.io/gd32e2-hal/gd32e230f8xx/gd32e2_hal/index.html) | 20 | 16K / 32K / 64K | 4K / 6K / 8K |
+| [`gd32e230e8xx`](https://szizoid.github.io/gd32e2-hal/gd32e230e8xx/gd32e2_hal/index.html) | 24 | 64K | 8K |
+| [`gd32e230g4xx`](https://szizoid.github.io/gd32e2-hal/gd32e230g4xx/gd32e2_hal/index.html) / [`g6xx`](https://szizoid.github.io/gd32e2-hal/gd32e230g6xx/gd32e2_hal/index.html) / [`g8xx`](https://szizoid.github.io/gd32e2-hal/gd32e230g8xx/gd32e2_hal/index.html) | 28 | 16K / 32K / 64K | 4K / 6K / 8K |
+| [`gd32e230k4tx`](https://szizoid.github.io/gd32e2-hal/gd32e230k4tx/gd32e2_hal/index.html) / [`k6tx`](https://szizoid.github.io/gd32e2-hal/gd32e230k6tx/gd32e2_hal/index.html) / [`k8tx`](https://szizoid.github.io/gd32e2-hal/gd32e230k8tx/gd32e2_hal/index.html) | 32, LQFP | 16K / 32K / 64K | 4K / 6K / 8K |
+| [`gd32e230k4ux`](https://szizoid.github.io/gd32e2-hal/gd32e230k4ux/gd32e2_hal/index.html) / [`k6ux`](https://szizoid.github.io/gd32e2-hal/gd32e230k6ux/gd32e2_hal/index.html) / [`k8ux`](https://szizoid.github.io/gd32e2-hal/gd32e230k8ux/gd32e2_hal/index.html) | 32, QFN | 16K / 32K / 64K | 4K / 6K / 8K |
+| [`gd32e230c4xx`](https://szizoid.github.io/gd32e2-hal/gd32e230c4xx/gd32e2_hal/index.html) / [`c6xx`](https://szizoid.github.io/gd32e2-hal/gd32e230c6xx/gd32e2_hal/index.html) / [`c8xx`](https://szizoid.github.io/gd32e2-hal/gd32e230c8xx/gd32e2_hal/index.html) | 48 | 16K / 32K / 64K | 4K / 6K / 8K |
 
 32 pads is the only place where the package matters: on QFN32 ground moves to the belly pad, and the two freed pins go to `PB2` and `PB8`; LQFP32 has neither.
 
-> Development targets `GD32E230K8U6`, that is `gd32e230k8ux`; the examples take the feature from the crate depending on itself in `[dev-dependencies]`. The published documentation is built for `gd32e230c8xx`, the largest part, so the page shows pins and peripherals the smaller parts do not have. `build.rs` turns the choice into the `memory.x` the linker needs and into cfg flags that gate the source. The AF map depends on the flash code — the same pin on the same AF number may lead to a different peripheral.
+> Development targets `GD32E230K8U6`, that is `gd32e230k8ux`; the examples take the feature from the crate depending on itself in `[dev-dependencies]`. docs.rs is built for `gd32e230c8xx`, the largest part, and shows pins and peripherals the smaller parts do not have; each feature in the table links to the documentation of its own part. `build.rs` turns the choice into the `memory.x` the linker needs and into cfg flags that gate the source. The AF map depends on the flash code — the same pin on the same AF number may lead to a different peripheral.
 
 The orthogonal **`defmt`** feature derives `defmt::Format` on public enums and error types. Off by default; it also enables `embedded-hal/defmt-03`.
 
 ### Documentation
 
-Method details are in the [documentation](https://docs.rs/gd32e2-hal/latest/gd32e2_hal/). A shorter view of most of the public API is in `examples/`.
+Method details are in the documentation: [docs.rs](https://docs.rs/gd32e2-hal/latest/gd32e2_hal/) for `gd32e230c8xx`, [GitHub Pages](https://szizoid.github.io/gd32e2-hal/) for every part. A shorter view of most of the public API is in `examples/`.
 
 ### Example
 
@@ -141,22 +141,22 @@ Hardware abstraction layer (HAL) для микроконтроллеров GD32E
 
 | фича | выводы | флеш | SRAM |
 | --- | --- | --- | --- |
-| `gd32e230f4xx` / `f6xx` / `f8xx` | 20 | 16K / 32K / 64K | 4K / 6K / 8K |
-| `gd32e230e8xx` | 24 | 64K | 8K |
-| `gd32e230g4xx` / `g6xx` / `g8xx` | 28 | 16K / 32K / 64K | 4K / 6K / 8K |
-| `gd32e230k4tx` / `k6tx` / `k8tx` | 32, LQFP | 16K / 32K / 64K | 4K / 6K / 8K |
-| `gd32e230k4ux` / `k6ux` / `k8ux` | 32, QFN | 16K / 32K / 64K | 4K / 6K / 8K |
-| `gd32e230c4xx` / `c6xx` / `c8xx` | 48 | 16K / 32K / 64K | 4K / 6K / 8K |
+| [`gd32e230f4xx`](https://szizoid.github.io/gd32e2-hal/gd32e230f4xx/gd32e2_hal/index.html) / [`f6xx`](https://szizoid.github.io/gd32e2-hal/gd32e230f6xx/gd32e2_hal/index.html) / [`f8xx`](https://szizoid.github.io/gd32e2-hal/gd32e230f8xx/gd32e2_hal/index.html) | 20 | 16K / 32K / 64K | 4K / 6K / 8K |
+| [`gd32e230e8xx`](https://szizoid.github.io/gd32e2-hal/gd32e230e8xx/gd32e2_hal/index.html) | 24 | 64K | 8K |
+| [`gd32e230g4xx`](https://szizoid.github.io/gd32e2-hal/gd32e230g4xx/gd32e2_hal/index.html) / [`g6xx`](https://szizoid.github.io/gd32e2-hal/gd32e230g6xx/gd32e2_hal/index.html) / [`g8xx`](https://szizoid.github.io/gd32e2-hal/gd32e230g8xx/gd32e2_hal/index.html) | 28 | 16K / 32K / 64K | 4K / 6K / 8K |
+| [`gd32e230k4tx`](https://szizoid.github.io/gd32e2-hal/gd32e230k4tx/gd32e2_hal/index.html) / [`k6tx`](https://szizoid.github.io/gd32e2-hal/gd32e230k6tx/gd32e2_hal/index.html) / [`k8tx`](https://szizoid.github.io/gd32e2-hal/gd32e230k8tx/gd32e2_hal/index.html) | 32, LQFP | 16K / 32K / 64K | 4K / 6K / 8K |
+| [`gd32e230k4ux`](https://szizoid.github.io/gd32e2-hal/gd32e230k4ux/gd32e2_hal/index.html) / [`k6ux`](https://szizoid.github.io/gd32e2-hal/gd32e230k6ux/gd32e2_hal/index.html) / [`k8ux`](https://szizoid.github.io/gd32e2-hal/gd32e230k8ux/gd32e2_hal/index.html) | 32, QFN | 16K / 32K / 64K | 4K / 6K / 8K |
+| [`gd32e230c4xx`](https://szizoid.github.io/gd32e2-hal/gd32e230c4xx/gd32e2_hal/index.html) / [`c6xx`](https://szizoid.github.io/gd32e2-hal/gd32e230c6xx/gd32e2_hal/index.html) / [`c8xx`](https://szizoid.github.io/gd32e2-hal/gd32e230c8xx/gd32e2_hal/index.html) | 48 | 16K / 32K / 64K | 4K / 6K / 8K |
 
 32 вывода — единственное место, где корпус имеет значение: у QFN32 земля уходит на брюшко, и два освободившихся вывода достаются `PB2` и `PB8`, у LQFP32 нет.
 
-> Разработка идёт под `GD32E230K8U6`, то есть `gd32e230k8ux`; примеры берут фичу из записи крейта на себя в `[dev-dependencies]`. Опубликованная документация собрана для `gd32e230c8xx`, самой жирной детали, поэтому страница показывает ноги и периферию, которых у мелкой нет. `build.rs` превращает выбор в нужный линкеру `memory.x` и в cfg-флаги, по которым гейтится исходник. Карта AF зависит от кода флеша — одна и та же нога на одном номере AF может вести к разной периферии.
+> Разработка идёт под `GD32E230K8U6`, то есть `gd32e230k8ux`; примеры берут фичу из записи крейта на себя в `[dev-dependencies]`. docs.rs собрана для `gd32e230c8xx`, самой жирной детали, и показывает ноги и периферию, которых у мелкой нет; каждая фича в таблице ведёт на документацию своего партномера. `build.rs` превращает выбор в нужный линкеру `memory.x` и в cfg-флаги, по которым гейтится исходник. Карта AF зависит от кода флеша — одна и та же нога на одном номере AF может вести к разной периферии.
 
 Ортогональная фича **`defmt`** вешает `defmt::Format` на публичные enum и типы ошибок. По умолчанию выключена; заодно включает `embedded-hal/defmt-03`.
 
 ### Документация
 
-Подробности по методам можно найти в [документации](https://docs.rs/gd32e2-hal/latest/gd32e2_hal/). Более краткое отражение большей части публичного API библиотеки в `examples/`.
+Подробности по методам — в документации: [docs.rs](https://docs.rs/gd32e2-hal/latest/gd32e2_hal/) для `gd32e230c8xx`, [GitHub Pages](https://szizoid.github.io/gd32e2-hal/) для каждого партномера. Более краткое отражение большей части публичного API библиотеки в `examples/`.
 
 ### Пример
 
