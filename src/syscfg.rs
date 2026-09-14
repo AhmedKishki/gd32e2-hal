@@ -1,7 +1,7 @@
 //! System configuration: the registers that wire peripherals to each other
 //! rather than to the outside world.
 //!
-//! Covers the boot mode and `EXTISS`, the latter through
+//! Covers the boot mode, the interrupt latency and `EXTISS`, the latter through
 //! [`ExtiLine::source`](crate::exti::ExtiLine::source).
 
 use crate::pac;
@@ -39,6 +39,17 @@ impl Syscfg {
             0b11 => BootMode::Sram,
             _ => unreachable!(),
         }
+    }
+
+    /// Holds interrupt entry back to no sooner than `latency + 1` cycles of
+    /// `hclk` after the interrupt pends. A value above the worst natural latency
+    /// makes entry take the same time whatever the core was executing; `0`, the
+    /// reset value, enters as early as possible.
+    pub fn set_irq_latency(&mut self, latency: u8) {
+        // SAFETY: the field is eight bits wide, so every `u8` is a latency.
+        self.syscfg
+            .cpu_irq_lat()
+            .modify(|_, w| unsafe { w.irq_latency().bits(latency) });
     }
 
     /// Points EXTI line `line` at the port encoded by `code`.
