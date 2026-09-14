@@ -1,11 +1,23 @@
 //! System configuration: the registers that wire peripherals to each other
 //! rather than to the outside world.
 //!
-//! Only `EXTISS` is covered so far, through
+//! Covers the boot mode and `EXTISS`, the latter through
 //! [`ExtiLine::source`](crate::exti::ExtiLine::source).
 
 use crate::pac;
 use crate::rcu::Rcu;
+
+/// The memory the chip booted from (`BOOT_MODE`).
+#[derive(Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
+pub enum BootMode {
+    /// Main flash: the application.
+    MainFlash,
+    /// System flash memory: the factory bootloader.
+    SystemFlash,
+    /// Embedded SRAM.
+    Sram,
+}
 
 /// Owns the SYSCFG registers.
 pub struct Syscfg {
@@ -17,6 +29,16 @@ impl Syscfg {
     /// the comparator.
     pub fn release(self) -> pac::Syscfg {
         self.syscfg
+    }
+
+    /// Returns the memory the chip booted from, as latched at the last reset.
+    pub fn boot_mode(&self) -> BootMode {
+        match self.syscfg.cfg0().read().boot_mode().bits() {
+            0b00 | 0b10 => BootMode::MainFlash,
+            0b01 => BootMode::SystemFlash,
+            0b11 => BootMode::Sram,
+            _ => unreachable!(),
+        }
     }
 
     /// Points EXTI line `line` at the port encoded by `code`.
