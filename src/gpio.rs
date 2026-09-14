@@ -24,7 +24,7 @@ use core::marker::PhantomData;
 use embedded_hal::digital::{ErrorType, InputPin, OutputPin, StatefulOutputPin};
 
 use crate::pac;
-use crate::rcu::Rcu;
+use crate::rcu::{Enable, Rcu, Reset};
 
 /// `CTL` field encoding: what the pin is wired to.
 ///
@@ -972,7 +972,8 @@ macro_rules! gpio {
         impl GpioExt for $Gpio {
             type Parts = $Parts;
             fn split(self, rcu: &mut Rcu) -> Self::Parts {
-                <$Gpio as crate::rcu::Enable>::enable(rcu);
+                <$Gpio as Enable>::enable(rcu);
+                <$Gpio as Reset>::reset(rcu);
                 $Parts {
                     $(
                         $(#[$cfg])?

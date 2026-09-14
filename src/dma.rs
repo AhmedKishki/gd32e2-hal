@@ -15,7 +15,7 @@ use core::ptr;
 
 use crate::adc::Adc;
 use crate::pac;
-use crate::rcu::Rcu;
+use crate::rcu::{Enable, Rcu};
 use crate::spi::{self, Spi};
 use crate::usart::{self, Usart};
 
@@ -444,7 +444,7 @@ pub trait DmaExt {
 impl DmaExt for pac::Dma {
     type Channels = Channels;
     fn split(self, rcu: &mut Rcu) -> Self::Channels {
-        <pac::Dma as crate::rcu::Enable>::enable(rcu);
+        <pac::Dma as Enable>::enable(rcu);
         Channels {
             ch0: Channel {
                 _marker: PhantomData,
