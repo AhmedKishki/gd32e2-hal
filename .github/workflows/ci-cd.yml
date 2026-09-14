@@ -70,6 +70,9 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      # Nightly for -Zrustdoc-map only; everything else stays on the pinned
+      # toolchain.
+      - run: rustup toolchain install nightly --profile minimal --target thumbv8m.base-none-eabi
       - run: bash scripts/pages.sh
       - uses: actions/upload-pages-artifact@v3
         with:
