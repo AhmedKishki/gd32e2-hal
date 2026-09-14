@@ -10,7 +10,7 @@
 
 Hardware abstraction layer (HAL) for the GD32E230 microcontrollers (Cortex-M23), written on top of the PAC crate: [github](https://github.com/gd32-rust/gd32-rs), [crates.io](https://crates.io/crates/gd32e2).
 
-> **Work in progress.** Written piece by piece, the API is unstable. Implemented modules: `adc`, `cmp`, `crc`, `dma`, `exti`, `fmc`, `gpio`, `i2c`, `rcu`, `spi`, `syscfg`, `time`, `timer`, `usart`, `watchdog`. Usage examples live in `examples/`, all of them run on the board. Not verified: the I²C fast and fast plus modes — written, unreachable on the test bench without external pull-ups; `CMPHST`, `CMPOSEL` and `lock` of the comparator; USART `Event::Error`; internal EXTI lines (LVD, RTC, CMP, USART0 wakeup); option byte fields other than the data bytes.
+> **Work in progress.** Written piece by piece, the API is unstable. Implemented modules: `adc`, `cmp`, `crc`, `dma`, `exti`, `fmc`, `gpio`, `i2c`, `rcu`, `spi`, `syscfg`, `time`, `timer`, `usart`, `watchdog`. Usage examples live in `examples/`, all of them run on the board. Not verified: the I²C fast and fast plus modes — written, unreachable on the test bench without external pull-ups; `CMPHST`, `CMPOSEL` and `lock` of the comparator; USART `Event::Error`; internal EXTI lines (LVD, RTC, CMP, USART0 wakeup); option byte fields other than the data bytes; `SYSCFG` other than `EXTISS` — the `PA11`/`PA12` remap needs a package below 32 pins.
 
 ### Principles
 
@@ -92,7 +92,7 @@ cargo re usart-echo   # build + flash over SWD, stays attached afterwards
 
 **Peripherals not covered at all**
 - [ ] `PMU` — sleep / deep-sleep / standby, wakeup pin, LDO.
-- [ ] The rest of `SYSCFG` — remapping `PA11`/`PA12` onto the `PA9`/`PA10` pads below 32 pins, and the second DMA channel map.
+- [ ] The rest of `SYSCFG` — the second DMA channel map, and the `CFG2` links into the timer break input.
 - [ ] `RTC` — calendar. With no crystal it runs off IRC40K, with the accuracy of IRC40K.
 
 **Finishing what is there**
@@ -127,7 +127,7 @@ Any contribution submitted for inclusion in this work shall be licensed the same
 
 Hardware abstraction layer (HAL) для микроконтроллеров GD32E230 (Cortex-M23), написанный поверх PAC-крейта: [github](https://github.com/gd32-rust/gd32-rs), [crates.io](https://crates.io/crates/gd32e2).
 
-> **В работе.** Пишется частями, API нестабилен. Реализованные модули: `adc`, `cmp`, `crc`, `dma`, `exti`, `fmc`, `gpio`, `i2c`, `rcu`, `spi`, `syscfg`, `time`, `timer`, `usart`, `watchdog`. Имеются примеры использования в `examples/`, все прогнаны на плате. Из непроверенного: режимы I²C fast и fast plus — написаны, на стенде без внешних подтяжек недостижимы; `CMPHST`, `CMPOSEL` и `lock` у компаратора; `Event::Error` у USART; внутренние линии EXTI (LVD, RTC, CMP, USART0 wakeup); поля option bytes кроме байтов данных.
+> **В работе.** Пишется частями, API нестабилен. Реализованные модули: `adc`, `cmp`, `crc`, `dma`, `exti`, `fmc`, `gpio`, `i2c`, `rcu`, `spi`, `syscfg`, `time`, `timer`, `usart`, `watchdog`. Имеются примеры использования в `examples/`, все прогнаны на плате. Из непроверенного: режимы I²C fast и fast plus — написаны, на стенде без внешних подтяжек недостижимы; `CMPHST`, `CMPOSEL` и `lock` у компаратора; `Event::Error` у USART; внутренние линии EXTI (LVD, RTC, CMP, USART0 wakeup); поля option bytes кроме байтов данных; `SYSCFG` кроме `EXTISS` — ремапу `PA11`/`PA12` нужен корпус меньше 32 выводов.
 
 ### Принципы
 
@@ -209,7 +209,7 @@ cargo re usart-echo   # сборка + прошивка по SWD, дальше �
 
 **Периферия, не покрытая вовсе**
 - [ ] `PMU` — sleep / deep-sleep / standby, wakeup-нога, LDO.
-- [ ] Остаток `SYSCFG` — ремап `PA11`/`PA12` на площадки `PA9`/`PA10` ниже 32 выводов и вторая карта каналов DMA.
+- [ ] Остаток `SYSCFG` — вторая карта каналов DMA и подключения `CFG2` к break-входу таймеров.
 - [ ] `RTC` — календарь. Без кварца пойдёт от IRC40K, с его же точностью.
 
 **Доделать имеющееся**
