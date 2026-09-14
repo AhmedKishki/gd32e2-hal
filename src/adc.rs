@@ -2,7 +2,9 @@
 //!
 //! Single-channel conversions, software triggered: blocking through
 //! [`Adc::read`], or started with [`Adc::start`] and collected with
-//! [`Adc::result`] on [`Event::Eoc`]. The ADC needs its own clock, which is
+//! [`Adc::result`] on [`Event::Eoc`]. An analog watchdog flags results outside
+//! a window set by [`Adc::set_watchdog_window`], raising [`Event::Watchdog`].
+//! The ADC needs its own clock, which is
 //! *not* started by default — call
 //! [`ClockConfig::adc_sel`](crate::rcu::ClockConfig::adc_sel) before
 //! constructing an [`Adc`].
@@ -97,6 +99,9 @@ pub enum Event {
     /// A conversion finished; `RDATA` holds the result. `EOC` clears on
     /// reading it, the same read a handler makes to fetch the value.
     Eoc,
+    /// A conversion result fell outside the window set by
+    /// [`Adc::set_watchdog_window`].
+    Watchdog,
 }
 
 /// A calibrated ADC, ready to convert.
@@ -110,6 +115,7 @@ impl Adc {
     /// clock stopped. A conversion still running is abandoned.
     pub fn release(mut self, rcu: &mut Rcu) -> pac::Adc {
         self.unlisten(Event::Eoc);
+        self.unlisten(Event::Watchdog);
         self.adc.ctl1().modify(|_, w| w.adcon().disabled());
         <pac::Adc as Enable>::disable(rcu);
         self.adc
@@ -197,13 +203,91 @@ impl Adc {
     pub fn listen(&mut self, event: Event) {
         match event {
             Event::Eoc => self.adc.ctl0().modify(|_, w| w.eocie().enabled()),
+            Event::Watchdog => self.adc.ctl0().modify(|_, w| w.wdeie().enabled()),
         }
     }
     /// Stops `event` from raising an interrupt.
     pub fn unlisten(&mut self, event: Event) {
         match event {
             Event::Eoc => self.adc.ctl0().modify(|_, w| w.eocie().disabled()),
+            Event::Watchdog => self.adc.ctl0().modify(|_, w| w.wdeie().disabled()),
         }
+    }
+    /// Whether `event` currently raises an interrupt.
+    pub fn is_listening(&self, event: Event) -> bool {
+        match event {
+            Event::Eoc => self.adc.ctl0().read().eocie().is_enabled(),
+            Event::Watchdog => self.adc.ctl0().read().wdeie().is_enabled(),
+        }
+    }
+    /// Whether the flag `event` raises is standing, listened for or not.
+    ///
+    /// Both events share one interrupt, so a handler listening for both needs
+    /// this to tell them apart.
+    pub fn is_pending(&self, event: Event) -> bool {
+        match event {
+            Event::Eoc => self.adc.stat().read().eoc().is_complete(),
+            Event::Watchdog => self.adc.stat().read().wde().is_event(),
+        }
+    }
+    /// Clears the flag `event` raised.
+    ///
+    /// A [`Event::Watchdog`] handler must call this: nothing else clears the
+    /// flag, so returning with it set re-enters the handler at once.
+    /// [`Event::Eoc`] also clears on [`result`](Self::result).
+    pub fn clear_interrupt(&mut self, event: Event) {
+        match event {
+            Event::Eoc => self.adc.stat().modify(|_, w| w.eoc().clear()),
+            Event::Watchdog => self.adc.stat().modify(|_, w| w.wde().clear()),
+        }
+    }
+    /// Sets the analog watchdog window: a conversion result below `low` or
+    /// above `high` trips the watchdog. Both are raw codes, like the result of
+    /// [`read`](Self::read).
+    ///
+    /// # Panics
+    ///
+    /// If `high` exceeds 4095, or if `low` is above `high`.
+    pub fn set_watchdog_window(&mut self, low: u16, high: u16) {
+        assert!(
+            high <= ADC_MAX_CODE as u16,
+            "ADC watchdog threshold must fit in 12 bits"
+        );
+        assert!(low <= high, "ADC watchdog low threshold above the high one");
+        self.adc.wdlt().write(|w| w.wdlt().bits(low));
+        self.adc.wdht().write(|w| w.wdht().bits(high));
+    }
+    /// Starts the analog watchdog on the channel of `pin` alone: only its
+    /// conversions are checked against the window.
+    ///
+    /// Out of reset the window spans every code, so nothing trips until
+    /// [`set_watchdog_window`](Self::set_watchdog_window) narrows it.
+    pub fn enable_watchdog<PIN: Channel>(&mut self, _pin: &PIN) {
+        self.adc.ctl0().modify(|_, w| {
+            // SAFETY: `CHANNEL` is an input number, 0–9 from a `Channel` impl,
+            // each one the field can select.
+            unsafe { w.wdchsel().bits(PIN::CHANNEL) }
+                .wdsc()
+                .single()
+                .rwden()
+                .enabled()
+        });
+    }
+    /// Starts the analog watchdog on every channel converted.
+    ///
+    /// That includes the internal channels behind
+    /// [`read_temperature`](Self::read_temperature) and
+    /// [`read_vref`](Self::read_vref), which a window chosen for a pin may
+    /// not fit. As for [`enable_watchdog`](Self::enable_watchdog), the window
+    /// has to be set first.
+    pub fn enable_watchdog_all(&mut self) {
+        self.adc
+            .ctl0()
+            .modify(|_, w| w.wdsc().all().rwden().enabled());
+    }
+    /// Stops the analog watchdog. The window is kept.
+    pub fn disable_watchdog(&mut self) {
+        self.adc.ctl0().modify(|_, w| w.rwden().disabled());
     }
 
     /// Converts one channel and returns the raw 12-bit code (0..=4095).
