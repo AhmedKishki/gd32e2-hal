@@ -58,6 +58,7 @@ compile_error!("select a chip: enable exactly one of the `gd32e230*` features");
 /// Re-export of the peripheral access crate this HAL is built on. Referring to
 /// it as `pac` keeps the door open to other parts of the family behind a single
 /// alias, instead of naming a specific chip module throughout.
+#[doc(no_inline)]
 pub use gd32e2::gd32e230 as pac;
 
 pub mod adc;
