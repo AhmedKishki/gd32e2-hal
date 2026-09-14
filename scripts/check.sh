@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# Every check CI runs, plus the documentation build with warnings denied, so
-# broken intra-doc links fail too. Stops at the first failure.
+# The checks CI runs, in the same order. Stops at the first failure.
+#
+# The library is linted on both ends of the range: the largest part, and the
+# smallest one, whose x4 pin map and small-package gates the largest never sees.
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -15,6 +17,7 @@ run() {
 
 run fmt --check
 run libclippy -- -D warnings
+run clippy --features gd32e230f4xx -- -D warnings
 run lib
 run examplesclippy -- -D warnings
 run examples
