@@ -73,6 +73,7 @@ if let Ok(byte) = usart0.read_byte() {
 
 - Target `thumbv8m.base-none-eabi`;
 - `build.rs` writes the `memory.x` the linker needs from the selected library feature, nothing has to be copied. (A `memory.x` in the project root still overrides the generated one — the linker looks there before the search paths — and that is the supported way out for a board that is not in the table);
+- `scripts/check.ps1` / `scripts/check.sh` — every CI check plus `cargo doc` with warnings denied, stopping at the first failure.
 
 #### cargo aliases
 
@@ -189,6 +190,7 @@ if let Ok(byte) = usart0.read_byte() {
 
 - Таргет `thumbv8m.base-none-eabi`;
 - `build.rs` пишет нужный линкеру `memory.x` из выбранной фичи библиотеки, копировать ничего не надо. (`memory.x` в корне проекта всё равно перебивает сгенерированный — линкер смотрит туда раньше путей поиска, — и это штатный выход для платы, которой нет в таблице);
+- `scripts/check.ps1` / `scripts/check.sh` — все проверки CI плюс `cargo doc` с запретом предупреждений, до первого падения.
 
 #### Алиасы cargo
 
