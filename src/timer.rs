@@ -435,7 +435,7 @@ impl<TIMERX: Instance> CountDownTimer<TIMERX> {
     }
     /// Halts the counter and returns the peripheral, skipping the stopped form.
     pub fn release(self) -> TIMERX {
-        self.stop().timer
+        self.stop().release()
     }
 }
 
@@ -474,7 +474,7 @@ impl<TIMERX: Instance> Delay<TIMERX> {
     /// The clock is left enabled and no reset is performed — a later
     /// [`constrain`](TimerExt::constrain) does both anyway.
     pub fn release(self) -> TIMERX {
-        self.timer
+        self.into_timer().release()
     }
 }
 
@@ -574,7 +574,7 @@ impl<TIMERX: Instance> Pwm<TIMERX> {
     }
     /// Halts the counter and returns the peripheral, skipping the stopped form.
     pub fn release(self) -> TIMERX {
-        self.into_timer().timer
+        self.into_timer().release()
     }
 }
 
@@ -676,7 +676,7 @@ impl<TIMERX: Instance> Capture<TIMERX> {
     }
     /// Halts the counter and returns the peripheral, skipping the stopped form.
     pub fn release(self) -> TIMERX {
-        self.into_timer().timer
+        self.into_timer().release()
     }
 }
 
