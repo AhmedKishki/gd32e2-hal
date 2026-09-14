@@ -10,6 +10,9 @@ jobs:
       - run: cargo lib
       - run: cargo examplesclippy -- -D warnings
       - run: cargo examples
+      - run: cargo doc --no-deps --target thumbv8m.base-none-eabi --features defmt,gd32e230c8xx
+        env:
+          RUSTDOCFLAGS: -D warnings
 
   # Publishes when the version in Cargo.toml is not on crates.io yet, then tags
   # the commit. Login is crates.io Trusted Publishing: it names this file, so a
