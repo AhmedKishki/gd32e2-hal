@@ -1,7 +1,8 @@
 //! System configuration: the registers that wire peripherals to each other
 //! rather than to the outside world.
 //!
-//! Covers the boot mode, the interrupt latency and `EXTISS`, the latter through
+//! Covers the boot mode, the interrupt latency, the SRAM parity error flag and
+//! `EXTISS`, the latter through
 //! [`ExtiLine::source`](crate::exti::ExtiLine::source).
 
 use crate::pac;
@@ -50,6 +51,17 @@ impl Syscfg {
         self.syscfg
             .cpu_irq_lat()
             .modify(|_, w| unsafe { w.irq_latency().bits(latency) });
+    }
+
+    /// Whether an SRAM parity error has been caught (`SRAM_PCEF`). Raised only
+    /// while the check is on, see
+    /// [`OptionBytes::sram_parity`](crate::fmc::OptionBytes::sram_parity).
+    pub fn sram_pcef(&self) -> bool {
+        self.syscfg.cfg2().read().sram_pcef().is_error()
+    }
+    /// Clears `SRAM_PCEF`.
+    pub fn clear_sram_pcef(&mut self) {
+        self.syscfg.cfg2().modify(|_, w| w.sram_pcef().clear());
     }
 
     /// Points EXTI line `line` at the port encoded by `code`.
