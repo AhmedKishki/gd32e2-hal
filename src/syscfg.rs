@@ -13,6 +13,12 @@ pub struct Syscfg {
 }
 
 impl Syscfg {
+    /// Returns the peripheral. The clock stays on, since `CFGCMPEN` also feeds
+    /// the comparator.
+    pub fn release(self) -> pac::Syscfg {
+        self.syscfg
+    }
+
     /// Points EXTI line `line` at the port encoded by `code`.
     ///
     /// # Panics
