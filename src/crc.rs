@@ -240,10 +240,9 @@ impl<PS> Crc<PS> {
         self.crc.data().read().data().bits()
     }
 
-    /// Returns the peripheral.
-    ///
-    /// The clock is left enabled — a later `new_*bit()` re-enables it anyway.
-    pub fn release(self) -> pac::Crc {
+    /// Returns the peripheral with its clock stopped.
+    pub fn release(self, rcu: &mut Rcu) -> pac::Crc {
+        <pac::Crc as Enable>::disable(rcu);
         self.crc
     }
 

@@ -24,7 +24,7 @@ use gd32e2_hal::spi::{Spi, SpiConfig, SpiPsc};
 
 #[entry]
 fn main() -> ! {
-    let mut dp = pac::Peripherals::take().unwrap();
+    let dp = pac::Peripherals::take().unwrap();
     let mut fmc = dp.fmc.constrain();
     // SPI takes its clock from the bus, so nothing here reads the frequencies —
     // but the tree still has to be frozen before `split`.
@@ -73,7 +73,7 @@ fn main() -> ! {
     }
 
     // Hand the peripheral and pins back.
-    let (_spi1, _sck, _miso, _mosi) = spi.release();
+    let (_spi1, _sck, _miso, _mosi) = spi.release(&mut rcu);
     defmt::info!("released, done");
     loop {
         cortex_m::asm::wfi();

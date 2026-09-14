@@ -61,7 +61,7 @@ fn main() -> ! {
     }
 
     // Done exercising it — hand the peripheral and pins back.
-    let (_usart1, _tx, _rx) = usart1.release();
+    let (_usart1, _tx, _rx) = usart1.release(&mut rcu);
     defmt::info!("released, done");
     loop {
         cortex_m::asm::wfi();

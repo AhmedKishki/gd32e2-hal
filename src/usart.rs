@@ -509,12 +509,19 @@ where
         }
     }
 
-    /// Disables the peripheral and returns it along with both pins.
-    ///
-    /// The clock is left enabled and no reset is performed — a later `new()`
-    /// does both anyway.
-    pub fn release(self) -> (USARTX, TX, RX) {
+    /// Waits for the last frame to leave the wire, then returns the peripheral
+    /// and both pins, disabled, with its interrupts off and its clock stopped.
+    pub fn release(mut self, rcu: &mut Rcu) -> (USARTX, TX, RX)
+    where
+        USARTX: Enable,
+    {
+        self.wait_tc();
+        self.unlisten(Event::Rbne);
+        self.unlisten(Event::Tbe);
+        self.unlisten(Event::Error);
+        self.unlisten(Event::ParityError);
         self.usart.ctl0().modify(|_, w| w.uen().disabled());
+        USARTX::disable(rcu);
         (self.usart, self.tx_pin, self.rx_pin)
     }
 }

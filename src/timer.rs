@@ -265,11 +265,9 @@ pub struct Timer<TIMERX> {
 }
 
 impl<TIMERX: Instance> Timer<TIMERX> {
-    /// Returns the peripheral.
-    ///
-    /// The clock is left enabled and no reset is performed — a later
-    /// [`constrain`](TimerExt::constrain) does both anyway.
-    pub fn release(self) -> TIMERX {
+    /// Returns the peripheral with its clock stopped.
+    pub fn release(self, rcu: &mut Rcu) -> TIMERX {
+        TIMERX::disable(rcu);
         self.timer
     }
 
@@ -315,6 +313,7 @@ impl<TIMERX: Instance> Timer<TIMERX> {
         Pwm {
             timer: self.timer,
             clk: self.clk,
+            channels: 0,
         }
     }
     /// Hands the timer over to PWM, taking the period as a duration.
@@ -338,6 +337,7 @@ impl<TIMERX: Instance> Timer<TIMERX> {
         Capture {
             timer: self.timer,
             clk: self.clk,
+            channels: 0,
         }
     }
 }
@@ -422,20 +422,23 @@ impl<TIMERX: Instance> CountDownTimer<TIMERX> {
         wait_update(&mut self.timer);
     }
 
-    /// Halts the counter and hands the timer back in its stopped form.
+    /// Halts the counter, stops listening and hands the timer back in its
+    /// stopped form.
     ///
     /// The counter keeps its current value; a later [`start`](Timer::start)
     /// reloads the dividers and restarts from zero.
     pub fn stop(mut self) -> Timer<TIMERX> {
+        self.unlisten(Event::Update);
         self.timer.set_cen(false);
         Timer {
             timer: self.timer,
             clk: self.clk,
         }
     }
-    /// Halts the counter and returns the peripheral, skipping the stopped form.
-    pub fn release(self) -> TIMERX {
-        self.stop().release()
+    /// Halts the counter and returns the peripheral with its clock stopped,
+    /// skipping the stopped form.
+    pub fn release(self, rcu: &mut Rcu) -> TIMERX {
+        self.stop().release(rcu)
     }
 }
 
@@ -469,12 +472,9 @@ impl<TIMERX: Instance> Delay<TIMERX> {
         }
     }
 
-    /// Returns the peripheral.
-    ///
-    /// The clock is left enabled and no reset is performed — a later
-    /// [`constrain`](TimerExt::constrain) does both anyway.
-    pub fn release(self) -> TIMERX {
-        self.into_timer().release()
+    /// Returns the peripheral with its clock stopped.
+    pub fn release(self, rcu: &mut Rcu) -> TIMERX {
+        self.into_timer().release(rcu)
     }
 }
 
@@ -485,6 +485,8 @@ impl<TIMERX: Instance> Delay<TIMERX> {
 pub struct Pwm<TIMERX> {
     timer: TIMERX,
     clk: Hertz,
+    /// Channels handed out and not yet taken back.
+    channels: u8,
 }
 
 impl<TIMERX: Instance> Pwm<TIMERX> {
@@ -492,7 +494,8 @@ impl<TIMERX: Instance> Pwm<TIMERX> {
     ///
     /// Which channel it is follows from the pin — the silicon routes each pin to
     /// one channel of one timer. The channel comes out configured but not
-    /// enabled, with no duty set, and holds the pin for as long as it lives.
+    /// enabled, with no duty set, and holds the pin until
+    /// [`release_channel`](Self::release_channel) takes it back.
     ///
     /// Several pins can reach one channel (`TIMER2` channel 0 answers on `PA6`
     /// and `PB4`), and handing over both yields two channels writing one compare
@@ -503,6 +506,7 @@ impl<TIMERX: Instance> Pwm<TIMERX> {
         TIMERX: PwmOps<C>,
     {
         self.timer.apply_pwm_mode();
+        self.channels += 1;
         PwmChannel {
             // SAFETY: each channel reaches its own compare register and its own
             // bits of the shared ones — the obligation `steal` places on the
@@ -510,6 +514,21 @@ impl<TIMERX: Instance> Pwm<TIMERX> {
             timer: unsafe { self.timer.steal() },
             pin,
         }
+    }
+    /// Takes a channel back, disabled and no longer listening, and returns its
+    /// pin.
+    pub fn release_channel<PIN, const C: u8>(
+        &mut self,
+        mut channel: PwmChannel<TIMERX, PIN, C>,
+    ) -> PIN
+    where
+        PIN: ChannelPin<TIMERX, C>,
+        TIMERX: PwmOps<C>,
+    {
+        channel.unlisten();
+        channel.disable();
+        self.channels -= 1;
+        channel.pin
     }
 
     /// Lets `event` raise an interrupt.
@@ -560,21 +579,43 @@ impl<TIMERX: Instance> Pwm<TIMERX> {
         self.set_period(psc, car);
     }
 
-    /// Halts the counter and takes the timer back out of PWM duty.
+    /// Halts the counter, stops listening and takes the timer back out of PWM
+    /// duty.
     ///
-    /// Channels keep their stolen handles and pins, so they outlive this and go
-    /// on reaching the registers; their outputs hold the level the counter
-    /// stopped at.
+    /// # Panics
+    ///
+    /// If a channel is still out — hand each one back through
+    /// [`release_channel`](Self::release_channel) first.
     pub fn into_timer(mut self) -> Timer<TIMERX> {
+        assert!(self.channels == 0, "PWM channels still handed out");
+        self.unlisten(Event::Update);
         self.timer.set_cen(false);
         Timer {
             timer: self.timer,
             clk: self.clk,
         }
     }
-    /// Halts the counter and returns the peripheral, skipping the stopped form.
-    pub fn release(self) -> TIMERX {
-        self.into_timer().release()
+    /// Halts the counter and returns the peripheral with its clock stopped,
+    /// skipping the stopped form.
+    ///
+    /// # Panics
+    ///
+    /// As for [`into_timer`](Self::into_timer).
+    pub fn release(self, rcu: &mut Rcu) -> TIMERX {
+        self.into_timer().release(rcu)
+    }
+    /// Same as [`release`](Self::release), but hands `self` back instead of
+    /// panicking.
+    ///
+    /// # Errors
+    ///
+    /// Returns `self` untouched while a channel is still out.
+    pub fn try_release(self, rcu: &mut Rcu) -> Result<TIMERX, Self> {
+        if self.channels == 0 {
+            Ok(self.release(rcu))
+        } else {
+            Err(self)
+        }
     }
 }
 
@@ -604,6 +645,8 @@ where
 pub struct Capture<TIMERX> {
     timer: TIMERX,
     clk: Hertz,
+    /// Channels handed out and not yet taken back.
+    channels: u8,
 }
 
 impl<TIMERX: Instance> Capture<TIMERX> {
@@ -611,8 +654,9 @@ impl<TIMERX: Instance> Capture<TIMERX> {
     ///
     /// Which channel it is follows from the pin, as in [`Pwm::channel`]. The
     /// channel comes out configured but not enabled, latches nothing until it is,
-    /// and holds the pin for as long as it lives. The edge is set here;
-    /// [`select_edge`](CaptureChannel::select_edge) changes it later.
+    /// and holds the pin until [`release_channel`](Self::release_channel) takes
+    /// it back. The edge is set here; [`select_edge`](CaptureChannel::select_edge)
+    /// changes it later.
     pub fn channel<PIN, const C: u8>(
         &mut self,
         pin: PIN,
@@ -624,6 +668,7 @@ impl<TIMERX: Instance> Capture<TIMERX> {
     {
         self.timer.apply_capture_mode();
         self.timer.select_edge(edge);
+        self.channels += 1;
         CaptureChannel {
             // SAFETY: each channel reaches its own capture register and its own
             // bits of the shared ones — the obligation `steal` places on the
@@ -632,6 +677,21 @@ impl<TIMERX: Instance> Capture<TIMERX> {
             pin,
             clk: self.clk,
         }
+    }
+    /// Takes a channel back, disabled and no longer listening, and returns its
+    /// pin.
+    pub fn release_channel<PIN, const C: u8>(
+        &mut self,
+        mut channel: CaptureChannel<TIMERX, PIN, C>,
+    ) -> PIN
+    where
+        PIN: ChannelPin<TIMERX, C>,
+        TIMERX: CaptureOps<C>,
+    {
+        channel.unlisten();
+        channel.disable();
+        self.channels -= 1;
+        channel.pin
     }
 
     /// Lets `event` raise an interrupt.
@@ -663,20 +723,43 @@ impl<TIMERX: Instance> Capture<TIMERX> {
         clear_pending(&mut self.timer, event);
     }
 
-    /// Halts the counter and takes the timer back out of capture duty.
+    /// Halts the counter, stops listening and takes the timer back out of
+    /// capture duty.
     ///
-    /// Channels keep their stolen handles and pins and go on reaching the
-    /// registers; they simply stop latching once the counter is halted.
+    /// # Panics
+    ///
+    /// If a channel is still out — hand each one back through
+    /// [`release_channel`](Self::release_channel) first.
     pub fn into_timer(mut self) -> Timer<TIMERX> {
+        assert!(self.channels == 0, "capture channels still handed out");
+        self.unlisten(Event::Update);
         self.timer.set_cen(false);
         Timer {
             timer: self.timer,
             clk: self.clk,
         }
     }
-    /// Halts the counter and returns the peripheral, skipping the stopped form.
-    pub fn release(self) -> TIMERX {
-        self.into_timer().release()
+    /// Halts the counter and returns the peripheral with its clock stopped,
+    /// skipping the stopped form.
+    ///
+    /// # Panics
+    ///
+    /// As for [`into_timer`](Self::into_timer).
+    pub fn release(self, rcu: &mut Rcu) -> TIMERX {
+        self.into_timer().release(rcu)
+    }
+    /// Same as [`release`](Self::release), but hands `self` back instead of
+    /// panicking.
+    ///
+    /// # Errors
+    ///
+    /// Returns `self` untouched while a channel is still out.
+    pub fn try_release(self, rcu: &mut Rcu) -> Result<TIMERX, Self> {
+        if self.channels == 0 {
+            Ok(self.release(rcu))
+        } else {
+            Err(self)
+        }
     }
 }
 
@@ -973,14 +1056,6 @@ impl<TIMERX: PwmOps<C>, PIN: ChannelPin<TIMERX, C>, const C: u8> PwmChannel<TIME
     pub fn clear_interrupt(&mut self) {
         self.timer.clear_chxif();
     }
-
-    /// Gives the pin back, dropping the channel.
-    ///
-    /// The output is left as it was, still driving its duty; call
-    /// [`disable`](Self::disable) first if the pin is wanted quiet.
-    pub fn release(self) -> PIN {
-        self.pin
-    }
 }
 
 /// What can go wrong while reading a capture.
@@ -1101,14 +1176,6 @@ impl<TIMERX: CaptureOps<C>, PIN: ChannelPin<TIMERX, C>, const C: u8>
         to: u16,
     ) -> Duration<u32, NOM, DENOM> {
         ticks_to_interval(to.wrapping_sub(from), self.timer.read_psc(), self.clk)
-    }
-
-    /// Gives the pin back, dropping the channel.
-    ///
-    /// Left as it was, still armed if it was armed; call
-    /// [`disable`](Self::disable) first if it should stop latching.
-    pub fn release(self) -> PIN {
-        self.pin
     }
 }
 

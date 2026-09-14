@@ -110,7 +110,7 @@ fn main() -> ! {
 
     // Only the receiver changes; the sender keeps putting even parity on the
     // same wire.
-    let (usart1, tx, rx) = receiver.release();
+    let (usart1, tx, rx) = receiver.release(&mut rcu);
     let receiver = Usart::new(
         &mut rcu,
         usart1,

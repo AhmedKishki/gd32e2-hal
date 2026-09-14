@@ -361,11 +361,15 @@ where
             scl_pin,
         }
     }
-    /// Returns the peripheral and both pins.
-    ///
-    /// The clock is left enabled and no reset is performed — a later `new()`
-    /// does both anyway.
-    pub fn release(self) -> (I2CX, SDA, SCL) {
+    /// Waits for a requested STOP to reach the bus, then returns the peripheral
+    /// and both pins, disabled, with its interrupts off and its clock stopped.
+    pub fn release(mut self, rcu: &mut Rcu) -> (I2CX, SDA, SCL) {
+        while self.i2c.ctl0().read().stop().bit_is_set() {}
+        self.unlisten(Event::Protocol);
+        self.unlisten(Event::Byte);
+        self.unlisten(Event::Error);
+        self.i2c.ctl0().modify(|_, w| w.i2cen().disabled());
+        I2CX::disable(rcu);
         (self.i2c, self.sda_pin, self.scl_pin)
     }
 }

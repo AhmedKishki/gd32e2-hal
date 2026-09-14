@@ -224,8 +224,6 @@ pub trait Instance: Enable + Reset {
     fn read_data(&mut self) -> u16;
     /// Returns the first pending error, if any, clearing it as the manual requires.
     fn take_error(&mut self) -> Option<Error>;
-    /// Enables or disables the peripheral (`SPIEN`).
-    fn set_enabled(&mut self, on: bool);
     /// Enables or disables the receive interrupt (`RBNEIE`).
     fn set_rbneie(&mut self, on: bool);
     /// Reads back `RBNEIE`.
@@ -238,6 +236,9 @@ pub trait Instance: Enable + Reset {
     fn set_errie(&mut self, on: bool);
     /// Reads back `ERRIE`.
     fn errie(&self) -> bool;
+    /// Waits for the last word to leave the wire, clears `SPIEN` and drains the
+    /// receive side, in the order the manual gives for this instance.
+    fn shut_down(&mut self);
 }
 
 impl Instance for pac::Spi0 {
@@ -303,10 +304,6 @@ impl Instance for pac::Spi0 {
         }
     }
     #[inline]
-    fn set_enabled(&mut self, on: bool) {
-        self.ctl0().modify(|_, w| w.spien().bit(on));
-    }
-    #[inline]
     fn set_rbneie(&mut self, on: bool) {
         self.ctl1().modify(|_, w| w.rbneie().bit(on));
     }
@@ -329,6 +326,14 @@ impl Instance for pac::Spi0 {
     #[inline]
     fn errie(&self) -> bool {
         self.ctl1().read().errie().bit_is_set()
+    }
+    #[inline]
+    fn shut_down(&mut self) {
+        while !self.tbe() || self.stat().read().trans().bit_is_set() {}
+        self.ctl0().modify(|_, w| w.spien().clear_bit());
+        if self.rbne() {
+            self.read_data();
+        }
     }
 }
 
@@ -398,10 +403,6 @@ impl Instance for pac::Spi1 {
         }
     }
     #[inline]
-    fn set_enabled(&mut self, on: bool) {
-        self.ctl0().modify(|_, w| w.spien().bit(on));
-    }
-    #[inline]
     fn set_rbneie(&mut self, on: bool) {
         self.ctl1().modify(|_, w| w.rbneie().bit(on));
     }
@@ -424,6 +425,14 @@ impl Instance for pac::Spi1 {
     #[inline]
     fn errie(&self) -> bool {
         self.ctl1().read().errie().bit_is_set()
+    }
+    #[inline]
+    fn shut_down(&mut self) {
+        while self.stat().read().txlvl().bits() != 0 || self.stat().read().trans().bit_is_set() {}
+        self.ctl0().modify(|_, w| w.spien().clear_bit());
+        while self.stat().read().rxlvl().bits() != 0 {
+            self.read_data();
+        }
     }
 }
 
@@ -576,12 +585,15 @@ where
         }
     }
 
-    /// Disables the peripheral and returns it along with the three pins.
-    ///
-    /// The clock is left enabled and no reset is performed — a later `new()`
-    /// does both anyway.
-    pub fn release(mut self) -> (SPIX, SCK, MISO, MOSI) {
-        self.spi.set_enabled(false);
+    /// Waits for the last word to leave the wire, then returns the peripheral
+    /// and the three pins, disabled, with its interrupts off and its clock
+    /// stopped. A received word not yet read is discarded.
+    pub fn release(mut self, rcu: &mut Rcu) -> (SPIX, SCK, MISO, MOSI) {
+        self.spi.shut_down();
+        self.unlisten(Event::Rbne);
+        self.unlisten(Event::Tbe);
+        self.unlisten(Event::Error);
+        SPIX::disable(rcu);
         (self.spi, self.sck_pin, self.miso_pin, self.mosi_pin)
     }
 }

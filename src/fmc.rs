@@ -610,8 +610,12 @@ impl Fmc {
         result
     }
 
-    /// Returns the peripheral.
-    pub fn release(self) -> pac::Fmc {
+    /// Returns the peripheral with its interrupts off.
+    pub fn release(mut self) -> pac::Fmc {
+        self.with_unlocked(|fmc| {
+            fmc.unlisten(Event::End);
+            fmc.unlisten(Event::Error);
+        });
         self.fmc
     }
 

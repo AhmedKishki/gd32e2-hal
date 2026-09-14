@@ -106,11 +106,12 @@ pub struct Adc {
 }
 
 impl Adc {
-    /// Returns the peripheral.
-    ///
-    /// The clock is left enabled and no reset is performed — a later
-    /// [`constrain`](AdcExt::constrain) does both anyway.
-    pub fn release(self) -> pac::Adc {
+    /// Returns the peripheral, powered down, with its interrupt off and its
+    /// clock stopped. A conversion still running is abandoned.
+    pub fn release(mut self, rcu: &mut Rcu) -> pac::Adc {
+        self.unlisten(Event::Eoc);
+        self.adc.ctl1().modify(|_, w| w.adcon().disabled());
+        <pac::Adc as Enable>::disable(rcu);
         self.adc
     }
 
