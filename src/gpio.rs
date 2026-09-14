@@ -551,6 +551,18 @@ impl<const P: char, const N: u8, MODE> Pin<P, N, MODE> {
     }
 }
 
+#[cfg(not(pads_ge_lqfp32))]
+impl<const P: char, const N: u8> Pin<P, N, Input> {
+    /// Hands out a pin whose pad has just changed hands in hardware — the
+    /// SYSCFG remap of `PA11`/`PA12` — reconfigured as an input. The caller
+    /// guarantees no other owner exists.
+    pub(crate) fn take_as_input() -> Self {
+        let mut pin = Pin { _mode: PhantomData };
+        pin.set_mode(Ctl::Input);
+        pin
+    }
+}
+
 impl<const P: char, const N: u8, MODE> Pin<P, N, MODE>
 where
     MODE: Active,
@@ -998,8 +1010,8 @@ gpio!(PartsA, pac::Gpioa, 'A', [
     pa6:6:Input,
     pa7:7:Input,
     #[cfg(pads_ge_24)] pa8:8:Input,
-    // Below 32 pins these two pads are shared with PA11 / PA12 through a remap,
-    // and PA9 / PA10 is the state after reset.
+    // Below 32 pins these two pads are shared with PA11 / PA12 through
+    // `Syscfg::remap_pa11_pa12`, and PA9 / PA10 is the state after reset.
     pa9:9:Input,
     pa10:10:Input,
     #[cfg(pads_ge_lqfp32)] pa11:11:Input,

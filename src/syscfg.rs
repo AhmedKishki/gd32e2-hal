@@ -1,10 +1,12 @@
 //! System configuration: the registers that wire peripherals to each other
 //! rather than to the outside world.
 //!
-//! Covers the boot mode, the interrupt latency, the SRAM parity error flag and
-//! `EXTISS`, the latter through
-//! [`ExtiLine::source`](crate::exti::ExtiLine::source).
+//! Covers the boot mode, the interrupt latency, the SRAM parity error flag, the
+//! `PA11`/`PA12` remap of packages below 32 pins and `EXTISS`, the latter
+//! through [`ExtiLine::source`](crate::exti::ExtiLine::source).
 
+#[cfg(not(pads_ge_lqfp32))]
+use crate::gpio::{Active, Input, Pin};
 use crate::pac;
 use crate::rcu::Rcu;
 
@@ -110,6 +112,38 @@ impl Syscfg {
             }),
             _ => unreachable!(),
         }
+    }
+}
+
+#[cfg(not(pads_ge_lqfp32))]
+impl Syscfg {
+    /// Hands the `PA9`/`PA10` pads over to `PA11`/`PA12`, which come back as
+    /// inputs.
+    ///
+    /// Packages below 32 pins bond one pair or the other on the same two pads,
+    /// `PA9`/`PA10` after reset.
+    pub fn remap_pa11_pa12<M9: Active, M10: Active>(
+        &mut self,
+        _pa9: Pin<'A', 9, M9>,
+        _pa10: Pin<'A', 10, M10>,
+    ) -> (Pin<'A', 11, Input>, Pin<'A', 12, Input>) {
+        let pins = (Pin::take_as_input(), Pin::take_as_input());
+        self.syscfg
+            .cfg0()
+            .modify(|_, w| w.pa11_pa12_rmp().set_bit());
+        pins
+    }
+    /// Gives the pads back to `PA9`/`PA10`, which come back as inputs.
+    pub fn unmap_pa11_pa12<M11: Active, M12: Active>(
+        &mut self,
+        _pa11: Pin<'A', 11, M11>,
+        _pa12: Pin<'A', 12, M12>,
+    ) -> (Pin<'A', 9, Input>, Pin<'A', 10, Input>) {
+        let pins = (Pin::take_as_input(), Pin::take_as_input());
+        self.syscfg
+            .cfg0()
+            .modify(|_, w| w.pa11_pa12_rmp().clear_bit());
+        pins
     }
 }
 
