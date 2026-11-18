@@ -52,7 +52,18 @@ gd32e230c8xx = []
 # default: a user who does not log with defmt should not pull the crate in.
 defmt = ["dep:defmt", "embedded-hal/defmt-03", "fugit/defmt"]
 
+# Embassy's time driver on TIMER2. Off by default: a program without Embassy
+# should not build it, and a program using TIMER2 itself needs the timer free.
+time-driver-timer2 = ["dep:critical-section", "dep:embassy-time-driver"]
+
 [dependencies]
+# Guards the time driver's state, which its callers share with the TIMER2
+# interrupt. The program, not this library, supplies the implementation.
+critical-section = { version = "1.1", optional = true }
+# Driver trait and time_driver_impl!, through which embassy-time finds the
+# driver. Its links key allows one copy per program, so the version here must
+# be compatible with the program's embassy-time.
+embassy-time-driver = { version = "0.2.2", optional = true }
 # Only ever named inside cfg_attr(feature = "defmt", ...), see [features].
 defmt = { version = "1.1", optional = true }
 # The library itself only calls cortex_m::asm (delay, nop); the critical-section

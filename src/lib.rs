@@ -74,6 +74,10 @@ pub mod rcu;
 pub mod spi;
 pub mod syscfg;
 pub mod time;
+// Opt-in, because the driver claims TIMER2 and its interrupt for the whole
+// program; see the time-driver-timer2 feature in Cargo.toml.
+#[cfg(feature = "time-driver-timer2")]
+pub mod time_driver;
 pub mod timer;
 pub mod usart;
 pub mod watchdog;
