@@ -662,6 +662,10 @@ pub trait Reset {
     fn reset(rcu: &mut Rcu);
 }
 
+// For each row `$Periph => $en_reg, $en_bit,` of the `bus_en!` calls below,
+// this macro writes an `impl Enable for $Periph` block. In that block,
+// `enable` sets bit `$en_bit` of the RCU register `$en_reg`, and `disable`
+// clears the bit.
 macro_rules! bus_en {
     ($($Periph:ty => $en_reg:ident, $en_bit:ident,)+) => {
         $(
@@ -677,6 +681,10 @@ macro_rules! bus_en {
     };
 }
 
+// For each row `$Periph => $rst_reg, $rst_bit,` of the `bus_rst!` calls
+// below, this macro writes an `impl Reset for $Periph` block. In that block,
+// `reset` sets bit `$rst_bit` of the RCU register `$rst_reg`, then clears the
+// bit.
 macro_rules! bus_rst {
     ($($Periph:ty => $rst_reg:ident, $rst_bit:ident,)+) => {
         $(
@@ -690,6 +698,8 @@ macro_rules! bus_rst {
     };
 }
 
+// Rows for `bus_en!`: a peripheral's PAC type, the RCU register that holds
+// the peripheral's clock bit, and that bit.
 bus_en! {
     pac::Gpioa => ahben, paen,
     pac::Gpiob => ahben, pben,
@@ -725,6 +735,8 @@ bus_en! {
     pac::Gpioc => ahben, pcen,
 }
 
+// Rows for `bus_rst!`: a peripheral's PAC type, the RCU register that holds
+// the peripheral's reset bit, and that bit.
 bus_rst! {
     pac::Gpioa => ahbrst, parst,
     pac::Gpiob => ahbrst, pbrst,
@@ -745,11 +757,13 @@ bus_rst! {
     pac::Timer16 => apb2rst, timer16rst,
 }
 
+// Same gate as TIMER14's `bus_en!` call above.
 #[cfg(has_timer14)]
 bus_rst! {
     pac::Timer14 => apb2rst, timer14rst,
 }
 
+// Same gate as GPIOC's `bus_en!` call above.
 #[cfg(pads_ge_48)]
 bus_rst! {
     pac::Gpioc => ahbrst, pcrst,
