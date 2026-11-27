@@ -25,6 +25,8 @@ use crate::pac;
 use crate::rcu::{Enable, Rcu, Reset};
 use crate::timer::{ChannelEnable, Instance};
 
+use crate::pac::{self, interrupt};
+
 /// Starts TIMER2 counting at the tick rate.
 ///
 /// Call it in `main`, after `freeze` sets the clocks and before the first
@@ -94,3 +96,29 @@ pub fn init(mut timer: pac::Timer2, rcu: &mut Rcu) {
     // already takes one tick.
     timer.set_cen(true);
 }
+
+/// INTF's flag bits. The other bits are reserved and must be written as 0.
+const INTF_FLAGS: u32 = 0x1E5F;
+
+// Counts the half-wraps. `#[interrupt]` puts this function into the vector
+// table's TIMER2 entry, so a program that defines its own TIMER2 handler fails
+// to link.
+#[interrupt]
+fn TIMER2() {
+    // SAFETY: `init` consumed the only `Timer2` token, and the handler touches
+    // only INTF, which `init` never writes.
+    let timer = unsafe { pac::Timer2::steal() };
+    let intf = timer.intf().read();
+    // Writing 0 to a flag clears it; writing 1 leaves it as it is. The inverse
+    // of what was read clears exactly the flags that were set, so a flag set
+    // after the read waits for the next run.
+    // SAFETY: the value has 0 in INTF's reserved bits, as the manual requires.
+    timer.intf().write(|w| unsafe { w.bits(!intf.bits() & INTF_FLAGS) });
+    if intf.upif().bit_is_set() {
+        HALF_WRAPS.fetch_add(1, Ordering::Relaxed);
+    }
+    if intf.ch0if().bit_is_set() {
+        HALF_WRAPS.fetch_add(1, Ordering::Relaxed);
+    }
+}
+
